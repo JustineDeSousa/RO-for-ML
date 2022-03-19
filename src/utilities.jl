@@ -1,5 +1,21 @@
 using Random
+using DelimitedFiles
 include("struct/tree.jl")
+
+
+function lecture_instances()
+    mat = readdlm("../data/tic-tac-toe.data")
+    dic = Dict{String,Int}("positive" => 1, "negative" => 2)
+    y = [ dic[split(mat[i], ",")[end]]      for i in 1:length(mat) ]
+    dic = Dict{String,Float64}("x" => 0.5, "o" => 1., "b" => 0.)
+    x = reshape([ dic[ split(mat[i], ",")[1:end-1][j] ] for j in 1:9 for i in 1:length(mat) ], (length(mat),9))
+    centerAndSaveDataSet(x, y, "../data/tic-tac-toe.txt")
+
+    mat = readdlm("../data/cmc.data")
+    y = [ parse.(Int, split(mat[i], ",")[end] )     for i in 1:length(mat) ]
+    x = hcat([parse.(Int, split(mat[i], ",")[1:end-1]) for i in 1:length(mat) ]...)'
+    centerAndSaveDataSet(x, y, "../data/cmc.txt")
+end
 
 """
 Création de deux listes d'indices pour les jeux de données d'entrainement et de test

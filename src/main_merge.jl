@@ -2,8 +2,9 @@ include("building_tree.jl")
 include("utilities.jl")
 include("merge.jl")
 
+
 function main_merge()
-    for dataSetName in ["iris", "seeds", "wine"]
+    for dataSetName in ["tic-tac-toe", "cmc"] #["iris", "seeds", "wine"]
         
         print("=== Dataset ", dataSetName)
         
@@ -15,7 +16,7 @@ function main_merge()
         X_test = X[test,:]
         Y_test = Y[test]
 
-        println(" (train size ", size(X_train, 1), ", test size ", size(X_test, 1), ", ", size(X_train, 2), ", features count: ", size(X_train, 2), ")")
+        println(" (train size ", size(X_train, 1), ", test size ", size(X_test, 1), ", features count: ", size(X_train, 2), ")")
         
         # Temps limite de la méthode de résolution en secondes        
         time_limit = 10

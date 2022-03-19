@@ -2,7 +2,9 @@ include("struct/distance.jl")
 
 """
 Essaie de regrouper des données en commençant par celles qui sont les plus proches.
-Deux clusters de données peuvent être fusionnés en un cluster C s'il n'existe aucune données x_i pour aucune caractéristique j qui intersecte l'intervalle représenté par les bornes minimale et maximale de C pour j (x_i,j n'appartient pas à [min_{x_k dans C} x_k,j ; max_{k dans C} x_k,j]).
+Deux clusters de données peuvent être fusionnés en un cluster C s'il n'existe aucune données x_i 
+pour aucune caractéristique j qui intersecte l'intervalle représenté par les bornes minimale et 
+maximale de C pour j (x_i,j n'appartient pas à [min_{x_k dans C} x_k,j ; max_{k dans C} x_k,j]).
 
 Entrées :
 - x : caractéristiques des données d'entraînement
@@ -78,12 +80,14 @@ function exactMerge(x, y)
 end
 
 """
-Regroupe des données en commençant par celles qui sont les plus proches jusqu'à ce qu'un certain pourcentage de clusters soit atteint
+Regroupe des données en commençant par celles qui sont les plus proches jusqu'à ce qu'un certain 
+pourcentage de clusters soit atteint
 
 Entrées :
 - x : caractéristiques des données
 - y : classe des données
-- gamma : le regroupement se termine quand il reste un nombre de clusters < n * gamma ou que plus aucun regroupement n'est possible
+- gamma : le regroupement se termine quand il reste un nombre de clusters < n * gamma ou que plus 
+aucun regroupement n'est possible
 
 Sorties :
 - un tableau de Cluster constituant une partition de x
