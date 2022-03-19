@@ -113,20 +113,9 @@ function build_tree(x::Matrix{Float64}, y::Vector{Int64}, D::Int64;multivariate:
     function my_cb_function(cb_data::CPLEX.CallbackContext, context_id::Clong)
         if isInteger(cb_data,context_id)
             CPLEX.load_callback_variable_primal(cb_data, context_id)
-            a_aux=zeros(featuresCount,sepCount)
-            u_at_aux=zeros(dataCount,(sepCount+leavesCount))
-            b_aux=zeros(sepCount)
-            for j in 1:featuresCount
-                for t in 1:sepCount
-                    a_aux[j,t]=callback_value(cb_data,a[j,t])
-                    b_aux[t]=callback_value(cb_data,b[t])
-                end
-            end
-            for t in 1:(sepCount+leavesCount)
-                for i in 1:dataCount
-                    u_at_aux[i,t]=callback_value(cb_data,u_at[i,t]) 
-                end
-            end
+            a_aux=callback_value.(cb_data,a)
+            u_at_aux=callback_value.(cb_data,u_at)
+            b_aux=callback_value.(cb_data,b)
             if multivariate
                 for i in 1:dataCount, t in 1:sepCount
                     if sum(a_aux[j, t]*x[i, j] for j in 1:featuresCount) + mu > b_aux[t] + (2+mu)*(1-u_at_aux[i, t*2])+TOL || sum(a_aux[j, t]*x[i, j]  for j in 1:featuresCount) +TOL < b_aux[t] - 2*(1-u_at_aux[i, t*2 + 1])
@@ -139,9 +128,9 @@ function build_tree(x::Matrix{Float64}, y::Vector{Int64}, D::Int64;multivariate:
                 end            
             else
                 for i in 1:dataCount, t in 1:sepCount
-                    if sum(a_aux[j, t]*(x[i, j]+mu_vect[j]-mu_min) for j in 1:featuresCount) + mu_min > (b_aux[t] + (1+mu_max)*(1-u_at_aux[i, t*2]) + TOL) || (sum(a_aux[j, t]*x[i, j] for j in 1:featuresCount) + TOL)< b_aux[t] - (1-u_at_aux[i, t*2 + 1])
+                    if sum(a_aux[j, t]*(x[i, j]+mu_vect[j]-mu_min) for j in 1:featuresCount) + mu_min > b_aux[t] + (1+mu_max)*(1-u_at_aux[i, t*2]) + TOL || sum(a_aux[j, t]*x[i, j] for j in 1:featuresCount) + TOL < b_aux[t] - (1-u_at_aux[i, t*2 + 1])
                         con= @build_constraint(sum(a[j, t]*(x[i, j]+mu_vect[j]-mu_min) for j in 1:featuresCount) + mu_min <= b[t] + (1+mu_max)*(1-u_at[i, t*2])) # contrainte de capacité controlant le passage dans le noeud fils gauche
-                        con2= @build_constraint( sum(a[j, t]*x[i, j] for j in 1:featuresCount) >= b[t] - (1-u_at[i, t*2 + 1])) # contrainte de capacité controlant le passage dans le noeud fils droit
+                        con2= @build_constraint(sum(a[j, t]*x[i, j] for j in 1:featuresCount) >= b[t] - (1-u_at[i, t*2 + 1])) # contrainte de capacité controlant le passage dans le noeud fils droit
                         MOI.submit(m,MOI.LazyConstraint(cb_data),con)
                         MOI.submit(m,MOI.LazyConstraint(cb_data),con2)
                         break
