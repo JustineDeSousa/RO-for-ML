@@ -36,6 +36,7 @@ function main()
             print(round(resolution_time, digits = 1), "s\t")
             print("gap ", round(gap, digits = 1), "%\t")
             if T != nothing
+                
                 print("Erreurs train/test ", prediction_errors(T,X_train,Y_train))
                 print("/", prediction_errors(T,X_test,Y_test), "\t")
             end

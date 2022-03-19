@@ -9,7 +9,7 @@ Structure représentant un arbre de décision
 mutable struct Tree
 
     D::Int64 # Nombre maximal de séparations d'une branche (profondeur de l'arbre - 1)
-    a::Matrix{Float64} # Vecteurs caractérisant les règles de branchement (a.x < b)
+    a::Matrix{Float64} # Vecteurs caractérisant les règles de branchement (a'.x_i < b)
     b::Vector{Float64} # Idem
     c::Vector{Int64} # c[t] : classe du noeud d'indice t (-1 si aucune classe n'est attribuée)
     
