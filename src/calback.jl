@@ -209,7 +209,7 @@ function build_tree(clusters::Vector{Cluster}, D::Int64;multivariate::Bool=false
     leavesCount = 2^D # Nombre de feuilles de l'arbre
     
     m = Model(CPLEX.Optimizer) 
-
+    MOI.set(m, MOI.NumberOfThreads(), 1)
     set_silent(m) # Masque les sorties du solveur
 
     if time_limit!=-1
@@ -284,12 +284,12 @@ function build_tree(clusters::Vector{Cluster}, D::Int64;multivariate::Bool=false
     @constraint(m, [i in 1:clusterCount, t in 1:(sepCount+leavesCount)], u_tw[i, t] <= c[clusters[i].class, t]) # contrainte de capacité qui impose le flot a etre nul si la classe de la feuille n'est pas la bonne
     if multivariate
         
-        @constraint(m, [i in 1:clusterCount, t in 1:sepCount, dataId in 1:size(clusters[i].x, 1)], sum(a[j, t]*clusters[i].x[dataId, j] for j in 1:featuresCount) + mu <= b[t] + (2+mu)*(1-u_at[i, t*2])) # contrainte de capacité controlant le passage dans le noeud fils gauche
-        @constraint(m, [i in 1:clusterCount, t in 1:sepCount, dataId in 1:size(clusters[i].x, 1)], sum(a[j, t]*clusters[i].x[dataId, j] for j in 1:featuresCount) >= b[t] - 2*(1-u_at[i, t*2 + 1])) # contrainte de capacité controlant le passage dans le noeud fils droit
+        #@constraint(m, [i in 1:clusterCount, t in 1:sepCount, dataId in 1:size(clusters[i].x, 1)], sum(a[j, t]*clusters[i].x[dataId, j] for j in 1:featuresCount) + mu <= b[t] + (2+mu)*(1-u_at[i, t*2])) # contrainte de capacité controlant le passage dans le noeud fils gauche
+        #@constraint(m, [i in 1:clusterCount, t in 1:sepCount, dataId in 1:size(clusters[i].x, 1)], sum(a[j, t]*clusters[i].x[dataId, j] for j in 1:featuresCount) >= b[t] - 2*(1-u_at[i, t*2 + 1])) # contrainte de capacité controlant le passage dans le noeud fils droit
         @constraint(m, [i in 1:clusterCount, t in 1:sepCount], u_at[i, t*2+1] <= d[t]) # contrainte de capacité empechant les données de passer dans le fils droit d'un noeud n'appliquant pas de règle de branchement
     else
-        @constraint(m, [i in 1:clusterCount, t in 1:sepCount], sum(a[j, t]*(clusters[i].uBounds[j]+mu_vect[j]-mu_min) for j in 1:featuresCount) + mu_min <= b[t] + (1+mu_max)*(1-u_at[i, t*2])) # contrainte de capacité controlant le passage dans le noeud fils gauche
-        @constraint(m, [i in 1:clusterCount, t in 1:sepCount], sum(a[j, t]*clusters[i].lBounds[j] for j in 1:featuresCount) >= b[t] - (1-u_at[i, t*2 + 1])) # contrainte de capacité controlant le passage dans le noeud fils droit
+        #@constraint(m, [i in 1:clusterCount, t in 1:sepCount], sum(a[j, t]*(clusters[i].uBounds[j]+mu_vect[j]-mu_min) for j in 1:featuresCount) + mu_min <= b[t] + (1+mu_max)*(1-u_at[i, t*2])) # contrainte de capacité controlant le passage dans le noeud fils gauche
+        #@constraint(m, [i in 1:clusterCount, t in 1:sepCount], sum(a[j, t]*clusters[i].lBounds[j] for j in 1:featuresCount) >= b[t] - (1-u_at[i, t*2 + 1])) # contrainte de capacité controlant le passage dans le noeud fils droit
         @constraint(m, [i in 1:clusterCount, t in 1:sepCount], u_at[i, t*2+1] <= sum(a[j, t] for j in 1:featuresCount)) # contrainte de capacité empechant les données de passer dans le fils droit d'un noeud n'appliquant pas de règle de branchement
     end
 
@@ -299,6 +299,41 @@ function build_tree(clusters::Vector{Cluster}, D::Int64;multivariate::Bool=false
     else
         @objective(m, Max, sum(length(clusters[i].dataIds) * u_at[i, 1] for i in 1:clusterCount))
     end
+
+    function my_cb_function(cb_data::CPLEX.CallbackContext, context_id::Clong)
+        if isInteger(cb_data,context_id)
+            CPLEX.load_callback_variable_primal(cb_data, context_id)
+            a_aux=callback_value.(cb_data,a)
+            u_at_aux=callback_value.(cb_data,u_at)
+            b_aux=callback_value.(cb_data,b)
+            if multivariate
+                for i in 1:clusterCount, t in 1:sepCount, dataId in 1:size(clusters[i].x, 1)
+                    if sum(a_aux[j, t]*clusters[i].x[dataId, j] for j in 1:featuresCount) + mu > b_aux[t] + (2+mu)*(1-u_at_aux[i, t*2])+TOL || sum(a_aux[j, t]*clusters[i].x[dataId, j] for j in 1:featuresCount) +TOL < b_aux[t] - 2*(1-u_at_aux[i, t*2 + 1])
+                        con=@build_constraint(sum(a[j, t]*clusters[i].x[dataId, j] for j in 1:featuresCount) + mu <= b[t] + (2+mu)*(1-u_at[i, t*2])) # contrainte de capacité controlant le passage dans le noeud fils gauche
+                        con2=@build_constraint(sum(a[j, t]*clusters[i].x[dataId, j] for j in 1:featuresCount) >= b[t] - 2*(1-u_at[i, t*2 + 1])) # contrainte de capacité controlant le passage dans le noeud fils droit
+                        MOI.submit(m,MOI.LazyConstraint(cb_data),con)
+                        MOI.submit(m,MOI.LazyConstraint(cb_data),con2)
+                        break
+                    end
+                end            
+            else
+                for i in 1:clusterCount, t in 1:sepCount
+                    if sum(a_aux[j, t]*(clusters[i].uBounds[j]+mu_vect[j]-mu_min) for j in 1:featuresCount) + mu_min > b_aux[t] + (1+mu_max)*(1-u_at_aux[i, t*2]) + TOL || sum(a_aux[j, t]*clusters[i].lBounds[j] for j in 1:featuresCount) +TOL < b_aux[t] - (1-u_at_aux[i, t*2 + 1])
+                        con= @build_constraint(sum(a[j, t]*(clusters[i].uBounds[j]+mu_vect[j]-mu_min) for j in 1:featuresCount) + mu_min <= b[t] + (1+mu_max)*(1-u_at[i, t*2])) # contrainte de capacité controlant le passage dans le noeud fils gauche
+                        con2= @build_constraint(sum(a[j, t]*clusters[i].lBounds[j] for j in 1:featuresCount) >= b[t] - (1-u_at[i, t*2 + 1])) # contrainte de capacité controlant le passage dans le noeud fils droit
+                        MOI.submit(m,MOI.LazyConstraint(cb_data),con)
+                        MOI.submit(m,MOI.LazyConstraint(cb_data),con2)
+                        break
+                    end
+                end 
+            end
+            
+        end    
+    end 
+    #set_optimizer_attribute(mp, "CPXPARAM_TimeLimit", maxTime) # seconds
+    MOI.set(m, CPLEX.CallbackFunction(), my_cb_function)
+
+
 
     starting_time = time()
     optimize!(m)
