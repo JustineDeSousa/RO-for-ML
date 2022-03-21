@@ -1,0 +1,49 @@
+\documentclass[main.tex]{subfiles}
+
+\begin{document}
+
+\begin{table}
+    \centering
+    \caption{Résultats sans regroupement}
+    \begin{tabular}{l|c|lcccc}
+	
+	\textbf{Instance} &\textbf{D} &\textbf{Séparation} &\textbf{Temps} &\textbf{GAP} &\multicolumn{2}{c}{\textbf{Erreurs}}\\
+	
+	 & & & & &Train set &Test set\\
+	\hline
+
+\multirow{6}*{\textbf{iris}} &\multirow{2}*{2} &Univarié &11.1 &0.0 &5 &1\\
+ & &Mulivarié &2.7 &0.0 &1 &3\\\cline{2-7}
+ &\multirow{2}*{3} &Univarié &30.1 &2.6 &3 &1\\
+ & &Mulivarié &3.9 &0.0 &0 &1\\\cline{2-7}
+ &\multirow{2}*{4} &Univarié &30.1 &4.3 &5 &3\\
+ & &Mulivarié &30.3 &3.4 &2 &3\\\hline
+\multirow{6}*{\textbf{seeds}} &\multirow{2}*{2} &Univarié &30.3 &7.7 &12 &3\\
+ & &Mulivarié &5.2 &0.0 &0 &1\\\cline{2-7}
+ &\multirow{2}*{3} &Univarié &30.2 &10.5 &13 &3\\
+ & &Mulivarié &17.9 &0.0 &0 &1\\\cline{2-7}
+ &\multirow{2}*{4} &Univarié &30.2 &61.5 &64 &14\\
+ & &Mulivarié &30.2 &46.1 &53 &17\\\hline
+\multirow{6}*{\textbf{wine}} &\multirow{2}*{2} &Univarié &30.1 &5.2 &7 &2\\
+ & &Mulivarié &1.2 &0.0 &0 &1\\\cline{2-7}
+ &\multirow{2}*{3} &Univarié &30.3 &2.9 &4 &2\\
+ & &Mulivarié &0.9 &0.0 &0 &1\\\cline{2-7}
+ &\multirow{2}*{4} &Univarié &30.4 &47.9 &46 &8\\
+ & &Mulivarié &23.4 &0.0 &0 &0\\\hline
+\multirow{6}*{\textbf{tic-tac-toe}} &\multirow{2}*{2} &Univarié &30.5 &53.5 &267 &65\\
+ & &Mulivarié &30.3 &53.5 &267 &65\\\cline{2-7}
+ &\multirow{2}*{3} &Univarié &30.7 &53.5 &267 &65\\
+ & &Mulivarié &30.6 &53.5 &267 &65\\\cline{2-7}
+ &\multirow{2}*{4} &Univarié &39.0 &53.5 &267 &65\\
+ & &Mulivarié &38.5 &53.5 &267 &65\\\hline
+\multirow{6}*{\textbf{cmc}} &\multirow{2}*{2} &Univarié &30.2 &270.4 &860 &216\\
+ & &Mulivarié &30.3 &135.1 &677 &167\\\cline{2-7}
+ &\multirow{2}*{3} &Univarié &30.5 &378.9 &932 &243\\
+ & &Mulivarié &30.5 &135.1 &677 &167\\\cline{2-7}
+ &\multirow{2}*{4} &Univarié &42.5 &1.178e9 &677 &167\\
+ & &Mulivarié &30.7 &135.1 &677 &167\\\hline
+    \hline
+    \end{tabular}
+\end{table}
+
+\end{document}
