@@ -3,10 +3,10 @@ include("utilities.jl")
 include("merge.jl")
 
 
-function main_merge()
+function main_merge(isMultivariate::Bool = false)
     res = Vector{String}[]
 
-    for dataSetName in ["iris"]#, "seeds", "wine", "tic-tac-toe", "cmc"]
+    for dataSetName in ["iris", "seeds", "wine", "tic-tac-toe", "cmc"]
             
         print("=== Dataset ", dataSetName)
         
@@ -26,11 +26,11 @@ function main_merge()
         for D in 2:4
             println("\tD = ", D)
 
-            println("\t\tUnivarié")
-            res_uni = testMerge(X_train, Y_train, X_test, Y_test, D, time_limit = time_limit, isMultivariate = false)
+            # println("\t\tUnivarié")
+            res_merge = testMerge(X_train, Y_train, X_test, Y_test, D, time_limit = time_limit, isMultivariate = isMultivariate)
 
-            for i in 1:length(res_uni)
-                push!(res, vcat([dataSetName, string(D), "Univarié" ], string.(res_uni[i])))
+            for i in 1:length(res_merge)
+                push!(res, vcat([dataSetName, string(D) ], string.(res_merge[i])))
             end
 
             # println("\t\tMultivarié")
@@ -60,56 +60,57 @@ function testMerge(X_train, Y_train, X_test, Y_test, D; time_limit::Int=-1, isMu
         print("/", prediction_errors(T,X_test,Y_test), "\t")
         println(round(resolution_time, digits=1), "s")
         
-        push!(res, [gamma, length(clusters), round(resolution_time, digits=1), string(round(gap, digits = 1))*"\\%", prediction_errors(T,X_train,Y_train), prediction_errors(T,X_test,Y_test)])
+        push!(res, [length(clusters), round(resolution_time, digits=1), string(round(gap, digits = 1))*"\\%", prediction_errors(T,X_train,Y_train), prediction_errors(T,X_test,Y_test)])
     end
     println()
 
     return res
 end 
 
-include("building_tree.jl")
-res_classic = main_merge()
-include("calback.jl")
-res_callback = main_merge()
 
+"""
+Ecris les résultats dans un fichier .tex
+"""
+function save_results(isMultivariate::Bool=false)
+    include("building_tree.jl")
+    res_classic = main_merge(isMultivariate)
+    include("calback.jl")
+    res_callback = main_merge(isMultivariate)
 
-rows_univarie = Vector{String}[]
-lines_univarie = String[]
-for i in 1:length(res_classic)
-    if rem(i, 6) == 1
-        rows[i][3] = "\\multirow{6}*{" * res[i][3] * "}"
-        if rem(i, 12) == 1
-            rows[i][2] = "\\multirow{12}*{" * string(res[i][2]) * "}"
-            if rem(i, 36) == 1
-                rows[i][1] = "\\multirow{36}*{\\textbf{" * res[i][1] * "}}"
+    rows = Vector{Vector{String}}(undef, size(res_classic,1))
+    lines = String[]
+    for i in 1:length(res_classic)
+        if rem(i, 6) == 1
+            if rem(i, 18) == 1
+                rows[i] = vcat(["\\multirow{18}*{\\textbf{" * res_classic[i][1] * "}}", "\\multirow{6}*{2}" ], res_classic[i][3:end], res_callback[i][4:end])
             else
-                rows[i][1] = ""
+                rows[i] = vcat(["", "\\multirow{6}*{" * res_classic[i][2] * "}", res_classic[i][3]], res_classic[i][4:end], res_callback[i][4:end])
             end
+            push!(lines, "")
         else
-            rows[i][1:2] = ["",""]
-        end
-        push!(lines, "")
-    else
-        rows[i][1:3] = ["","",""]
-        if rem(i, 6) == 0
-            if rem(i, 12) == 0
-                if rem(i, 36) == 0
+            rows[i] = vcat(["", ""], res_classic[i][3:end], res_callback[i][4:end])
+            
+            if rem(i, 6) == 0
+                if rem(i, 18) == 0
                     push!(lines, "\\hline")
                 else
-                    push!(lines, "\\cline{2-9}")
+                    push!(lines, "\\cline{2-11}")
                 end
             else
-                push!(lines, "\\cline{3-9}")
+                push!(lines,"")
             end
-        else
-            push!(lines,"")
         end
+        
     end
-       
+
+    titles =    ["Instance", "D", "nb clusters", "Classique",                             "Callback"]
+    subtitles = ["",         "",  "",            "Temps", "GAP", "Erreurs",               "Temps", "GAP", "Erreurs" ]
+    subsubtitles = ["",      "",  "",            "",      "",    "Train set", "Test set", "",      "",    "Train set", "Test set" ]
+    separation = isMultivariate ? "multivaries" : "univarie"
+    write_table_tex("../res/results_merge_" * separation, "Résultats avec regroupements " * separation, titles, rows, 
+                    subtitles=subtitles, subsubtitles = subsubtitles, num_col_titles = [1,1,1,4,4], num_col_sub = [1,1,1,1,1,2,1,1,2],
+                    alignment="|l|c|r|cccc|cccc|", lines = lines, maxRawsPerPage=54)
 end
 
-titles = ["Instance", "D", "Séparation", "\$\\gamma\$", "nb clusters", "Temps", "GAP", "Erreurs"]
-subtitles = ["", "", "", "", "", "", "", "Train set", "Test set"]
-write_table_tex("../res/results_merge", "Résultats avec regroupements", titles, rows, 
-                subtitles=subtitles, num_col_titles = [1,1,1,1,1,1,1,2], alignment="|l|c|lcccccc|", lines = lines,
-                maxRawsPerPage=60)
+save_results(false) #Univarié
+save_results(true) #Multivarié

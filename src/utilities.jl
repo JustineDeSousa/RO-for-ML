@@ -154,7 +154,8 @@ Input:
         - num_col_sub = number of cols for each subtitle
 """
 function write_table_tex(output::String, caption::String, titles::Array{String}, rows::Vector{Vector{String}};
-    subtitles::Array{String}=String[], num_col_titles::Array{Int}=ones(Int,length(titles)), num_col_sub::Array{Int}=ones(Int,length(subtitles)),
+    subtitles::Array{String}=String[], subsubtitles::Array{String}=String[], 
+    num_col_titles::Array{Int}=ones(Int,length(titles)), num_col_sub::Array{Int}=ones(Int,length(subtitles)),
     alignment::String="c"^sum(num_col_titles), lines::Array{String}=fill("",length(rows)), maxRawsPerPage::Int=50 )
 
     fout = open(output * ".tex", "w")
@@ -174,9 +175,10 @@ function write_table_tex(output::String, caption::String, titles::Array{String},
     header *= caption
     header *= raw"""
 }
-    \begin{tabular}{"""
+    \begin{tabular}{
+    """
 
-    header *= alignment * "}\n\t\n\t"
+    header *= alignment * "}\n\\hline\t\n\t"
 
     for i in 1:length(titles)
         if num_col_titles[i] > 1
@@ -190,7 +192,7 @@ function write_table_tex(output::String, caption::String, titles::Array{String},
             header *= " &"
         end
     end
-    header *= "\\\\\n\t"
+    header *= "\\\\\n\t\\hline\n"
 
     #SUBHEADERS
     subheader = "\n\t"
@@ -203,11 +205,24 @@ function write_table_tex(output::String, caption::String, titles::Array{String},
             if num_col_sub[i] > 1
                 subheader *= "}"
             end
-            if i < sum(num_col_titles)
+            if i < length(subtitles)
                 subheader *= " &"
             end
         end
-        subheader *= "\\\\\n\t\\hline\n"
+        subheader *= "\\\\\n\t"
+    end
+
+    #SUBSUBHEADERS
+    subsubheader = "\n\t"
+    if length(subsubtitles) > 0
+        for i in 1:length(subsubtitles)
+            subsubheader *= subsubtitles[i]
+            
+            if i < length(subsubtitles)
+                subsubheader *= " &"
+            end
+        end
+        subsubheader *= "\\\\\n\t\\hline\n"
     end
 
     #FOOTER OF TABLES
@@ -218,6 +233,7 @@ function write_table_tex(output::String, caption::String, titles::Array{String},
 
     print(fout, header)
     println(fout, subheader)
+    println(fout, subsubheader)
 
     id = 1
 
@@ -235,9 +251,10 @@ function write_table_tex(output::String, caption::String, titles::Array{String},
         
         #If we need to start a new page
         if rem(id, maxRawsPerPage) == 0
-            println(fout, footer, "\\newpage\n\thispagestyle{empty}")
+            println(fout, footer, "\\newpage\n\\thispagestyle{empty}")
             println(fout, header)
             println(fout, subheader)
+            println(fout, subsubheader)
         end
         id += 1
     end
