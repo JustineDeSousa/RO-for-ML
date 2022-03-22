@@ -13,7 +13,7 @@ Entrées :
 - time_limits (optionnel) : temps maximal de résolution (-1 si le temps n'est pas limité) (-1 par défaut)
 """
 function build_tree(x::Matrix{Float64}, y::Vector{Int64}, D::Int64;multivariate::Bool=false, time_limit::Int64 = -1, mu::Float64=10^(-4))
-    
+
     dataCount = length(y) # Nombre de données d'entraînement
     featuresCount = length(x[1, :]) # Nombre de caractéristiques
     classCount = length(unique(y)) # Nombre de classes différentes

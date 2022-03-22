@@ -28,7 +28,7 @@ function main(isMultivariate::Bool=false)
             
             ## 1 - Univarié (séparation sur une seule variable à la fois)
             # Création de l'arbre
-            T, obj, resolution_time, gap = build_tree(X_train, Y_train, D,  multivariate = isMultivariate, time_limit = time_limit)
+            T, obj, resolution_time, gap = build_tree(X_train, Y_train, D,  multivariate = isMultivariate, time_limit = time_limit, mu=1e-4)
 
             # Test de la performance de l'arbre
             print(round(resolution_time, digits = 1), "s\t")
@@ -40,20 +40,6 @@ function main(isMultivariate::Bool=false)
             end
             println()
             push!(res, [dataSetName, string(D), string(round(resolution_time, digits = 1)), string(round(gap, digits = 1)) * "\\%", string(prediction_errors(T,X_train,Y_train)), string(prediction_errors(T,X_test,Y_test)) ])
-
-            ## 2 - Multivarié
-            # print("    Multivarié...\t")
-            # line = String["", "", "Mulivarié"]
-            # T, obj, resolution_time, gap = build_tree(X_train, Y_train, D, multivariate = true, time_limit = time_limit)
-            
-            # print(round(resolution_time, digits = 1), "s\t")
-            # print("gap ", round(gap, digits = 1), "%\t")
-            
-            # if T != nothing
-            #     print("Erreurs train/test ", prediction_errors(T,X_train,Y_train))
-            #     print("/", prediction_errors(T,X_test,Y_test), "\t")
-            # end
-            # println("\n")
             
         end
     end 
@@ -61,59 +47,38 @@ function main(isMultivariate::Bool=false)
 end
 
 
-"""
-Ecris les résultats dans un fichier .tex
-"""
-function save_results(isMultivariate::Bool=false)
-    include("building_tree.jl")
-    res_classic = main(isMultivariate)
-    include("calback.jl")
-    res_callback = main(isMultivariate)
 
-    rows = Vector{Vector{String}}(undef, size(res_classic,1))
-    lines = String[]
-    for i in 1:length(res_classic)
-        if rem(i, 3) == 1
-            rows[i] = vcat(["\\multirow{3}*{\\textbf{" * res_classic[i][1] * "}}"], res_classic[i][2:end], res_callback[i][3:end])
-            push!(lines, "")
-        else
-            rows[i] = vcat([""], res_classic[i][2:end], res_callback[i][3:end])
-            
-            if rem(i, 3) == 0
-                push!(lines, "\\hline")
-            else
-                push!(lines,"")
-            end
-        end
+#Ecris les résultats dans un fichier .tex
+isMultivariate = true
+include("building_tree.jl")
+global res_classic = main(isMultivariate)
+include("calback.jl")
+global res_callback = main(isMultivariate)
+
+rows = Vector{Vector{String}}(undef, size(res_classic,1))
+lines = String[]
+for i in 1:length(res_classic)
+    if rem(i, 3) == 1
+        rows[i] = vcat(["\\multirow{3}*{\\textbf{" * res_classic[i][1] * "}}"], res_classic[i][2:end], res_callback[i][3:end])
+        push!(lines, "")
+    else
+        rows[i] = vcat([""], res_classic[i][2:end], res_callback[i][3:end])
         
+        if rem(i, 3) == 0
+            push!(lines, "\\hline")
+        else
+            push!(lines,"")
+        end
     end
-
-    titles =    ["Instance", "D", "Classique",               "Callback"]
-    subtitles = ["",         "",  "Temps", "GAP", "Erreurs",               "Temps", "GAP", "Erreurs" ]
-    subsubtitles = ["",      "",  "",      "",    "Train set", "Test set", "",      "",    "Train set", "Test set" ]
-    filename = isMultivariate ? "multivarie" : "univarie"
-    caption = isMultivariate ? "multivariée" : "univariée"
-    write_table_tex("../res/results_classic_" * filename, "Résultats sans regroupement et séparation " * caption, titles, rows, 
-                    subtitles=subtitles, subsubtitles = subsubtitles, num_col_titles = [1,1,4,4], num_col_sub = [1,1,1,1,2,1,1,2],
-                    alignment="|l|c|cccc|cccc|", lines = lines, maxRawsPerPage=54)
+    
 end
 
-save_results(false) #Univarié
-save_results(true) #Multivarié
+titles =    ["Instance", "D", "Classique",                             "Callback"]
+subtitles = ["",         "",  "Temps", "GAP", "Erreurs",               "Temps", "GAP", "Erreurs" ]
+subsubtitles = ["",      "",  "",      "",    "Train set", "Test set", "",      "",    "Train set", "Test set" ]
+filename = isMultivariate ? "multivarie" : "univarie"
+caption = isMultivariate ? "multivariée" : "univariée"
+write_table_tex("../res/results_classic_" * filename, "Résultats sans regroupement et séparation " * caption, titles, rows, 
+                subtitles=subtitles, subsubtitles = subsubtitles, num_col_titles = [1,1,4,4], num_col_sub = [1,1,1,1,2,1,1,2],
+                alignment="|l|c|cccc|cccc|", lines = lines, maxRawsPerPage=54)
 
-# if D == 2
-#     line = String["\\multirow{6}*{\\textbf{" *dataSetName*"}}", "\\multirow{2}*{" * string(D) * "}"]
-# else
-#     line = String["", "\\multirow{2}*{" * string(D) * "}"]
-# end
-
-# if D == 4
-#     push!(lines, "\\hline")
-# else
-#     push!(lines, "\\cline{2-7}")
-# end
-# rows, lines = main()
-# titles = ["Instance", "D", "Séparation", "Temps", "GAP", "Erreurs"]
-# subtitles = ["", "", "", "", "", "Train set", "Test set"]
-# write_table_tex("../res/results_classic", "Résultats sans regroupement", titles, rows, 
-#                 subtitles=subtitles, num_col_titles = [1,1,1,1,1,2], alignment="l|c|lcccc", lines=lines)

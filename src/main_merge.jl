@@ -21,7 +21,7 @@ function main_merge(isMultivariate::Bool = false)
         println(" (train size ", size(X_train, 1), ", test size ", size(X_test, 1), ", features count: ", size(X_train, 2), ")")
         
         # Temps limite de la méthode de résolution en secondes        
-        time_limit = 10
+        time_limit = 60
 
         for D in 2:4
             println("\tD = ", D)
@@ -33,12 +33,6 @@ function main_merge(isMultivariate::Bool = false)
                 push!(res, vcat([dataSetName, string(D) ], string.(res_merge[i])))
             end
 
-            # println("\t\tMultivarié")
-            # res_multi = testMerge(X_train, Y_train, X_test, Y_test, D, time_limit = time_limit, isMultivariate = true)
-
-            # for i in 1:length(res_uni)
-            #     push!(res, vcat([dataSetName, string(D), "Multivarié" ], string.(res_multi[i])))
-            # end
         end
     end
     return res
@@ -68,49 +62,46 @@ function testMerge(X_train, Y_train, X_test, Y_test, D; time_limit::Int=-1, isMu
 end 
 
 
-"""
-Ecris les résultats dans un fichier .tex
-"""
-function save_results(isMultivariate::Bool=false)
-    include("building_tree.jl")
-    res_classic = main_merge(isMultivariate)
-    include("calback.jl")
-    res_callback = main_merge(isMultivariate)
+#Ecris les résultats dans un fichier .tex
+isMultivariate = true
+include("building_tree.jl")
+global res_classic = main_merge(isMultivariate)
+include("calback.jl")
+global res_callback = main_merge(isMultivariate)
 
-    rows = Vector{Vector{String}}(undef, size(res_classic,1))
-    lines = String[]
-    for i in 1:length(res_classic)
-        if rem(i, 6) == 1
-            if rem(i, 18) == 1
-                rows[i] = vcat(["\\multirow{18}*{\\textbf{" * res_classic[i][1] * "}}", "\\multirow{6}*{2}" ], res_classic[i][3:end], res_callback[i][4:end])
-            else
-                rows[i] = vcat(["", "\\multirow{6}*{" * res_classic[i][2] * "}", res_classic[i][3]], res_classic[i][4:end], res_callback[i][4:end])
-            end
-            push!(lines, "")
+rows = Vector{Vector{String}}(undef, size(res_classic,1))
+lines = String[]
+for i in 1:length(res_classic)
+    if rem(i, 6) == 1
+        if rem(i, 18) == 1
+            rows[i] = vcat(["\\multirow{18}*{\\textbf{" * res_classic[i][1] * "}}", "\\multirow{6}*{2}" ], res_classic[i][3:end], res_callback[i][4:end])
         else
-            rows[i] = vcat(["", ""], res_classic[i][3:end], res_callback[i][4:end])
-            
-            if rem(i, 6) == 0
-                if rem(i, 18) == 0
-                    push!(lines, "\\hline")
-                else
-                    push!(lines, "\\cline{2-11}")
-                end
-            else
-                push!(lines,"")
-            end
+            rows[i] = vcat(["", "\\multirow{6}*{" * res_classic[i][2] * "}", res_classic[i][3]], res_classic[i][4:end], res_callback[i][4:end])
         end
+        push!(lines, "")
+    else
+        rows[i] = vcat(["", ""], res_classic[i][3:end], res_callback[i][4:end])
         
+        if rem(i, 6) == 0
+            if rem(i, 18) == 0
+                push!(lines, "\\hline")
+            else
+                push!(lines, "\\cline{2-11}")
+            end
+        else
+            push!(lines,"")
+        end
     end
-
-    titles =    ["Instance", "D", "nb clusters", "Classique",                             "Callback"]
-    subtitles = ["",         "",  "",            "Temps", "GAP", "Erreurs",               "Temps", "GAP", "Erreurs" ]
-    subsubtitles = ["",      "",  "",            "",      "",    "Train set", "Test set", "",      "",    "Train set", "Test set" ]
-    separation = isMultivariate ? "multivaries" : "univarie"
-    write_table_tex("../res/results_merge_" * separation, "Résultats avec regroupements " * separation, titles, rows, 
-                    subtitles=subtitles, subsubtitles = subsubtitles, num_col_titles = [1,1,1,4,4], num_col_sub = [1,1,1,1,1,2,1,1,2],
-                    alignment="|l|c|r|cccc|cccc|", lines = lines, maxRawsPerPage=54)
+    
 end
 
-save_results(false) #Univarié
-save_results(true) #Multivarié
+titles =    ["Instance", "D", "nb clusters", "Classique",                             "Callback"]
+subtitles = ["",         "",  "",            "Temps", "GAP", "Erreurs",               "Temps", "GAP", "Erreurs" ]
+subsubtitles = ["",      "",  "",            "",      "",    "Train set", "Test set", "",      "",    "Train set", "Test set" ]
+filename = isMultivariate ? "multivarie" : "univarie"
+caption = isMultivariate ? "multivariée" : "univariée"
+write_table_tex("../res/results_merge_" * filename, "Résultats avec regroupements et séparation " * caption, titles, rows, 
+                subtitles=subtitles, subsubtitles = subsubtitles, num_col_titles = [1,1,1,4,4], num_col_sub = [1,1,1,1,1,2,1,1,2],
+                alignment="|l|c|r|cccc|cccc|", lines = lines, maxRawsPerPage=54)
+
+
