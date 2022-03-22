@@ -1,0 +1,40 @@
+\documentclass[main.tex]{subfiles}
+\newmargin{2cm}{2cm}
+\setlength{\voffset}{-1.5cm}
+\begin{document}
+\thispagestyle{empty}
+
+\begin{table}
+    \centering
+    \caption{Résultats sans regroupement et séparation univariée}
+    \begin{tabular}{
+    |l|c|cccc|cccc|}
+\hline	
+	\textbf{Instance} &\textbf{D} &\multicolumn{4}{c}{\textbf{Classique}} &\multicolumn{4}{c}{\textbf{Callback}}\\
+	\hline
+
+	 & &Temps &GAP &\multicolumn{2}{c}{Erreurs} &Temps &GAP &\multicolumn{2}{c}{Erreurs}\\
+	
+
+	 & & & &Train set &Test set & & &Train set &Test set\\
+	\hline
+
+\multirow{3}*{\textbf{iris}} &2 &33.4 &2.2\% &5 &1 &30.0 &3.0\% &5 &1\\
+ &3 &30.0 &1.2e8\% &76 &24 &30.0 &22.4\% &5 &2\\
+ &4 &30.1 &1.2e8\% &76 &24 &30.1 &1.2e8\% &76 &24\\\hline
+\multirow{3}*{\textbf{seeds}} &2 &30.0 &21.5\% &21 &5 &30.0 &21.4\% &18 &2\\
+ &3 &30.1 &330.8\% &75 &20 &30.1 &330.8\% &75 &20\\
+ &4 &30.1 &5499.8\% &115 &25 &30.1 &1.68e8\% &115 &25\\\hline
+\multirow{3}*{\textbf{wine}} &2 &30.0 &14.5\% &18 &8 &30.1 &14.5\% &18 &8\\
+ &3 &30.0 &19.3\% &19 &6 &30.1 &19.3\% &19 &6\\
+ &4 &30.1 &153.6\% &80 &21 &30.1 &153.6\% &80 &21\\\hline
+\multirow{3}*{\textbf{tic-tac-toe}} &2 &30.1 &107.0\% &395 &103 &30.1 &7.66e8\% &267 &65\\
+ &3 &30.2 &7.66e8\% &267 &65 &30.2 &7.66e8\% &267 &65\\
+ &4 &31.1 &7.66e8\% &267 &65 &30.4 &7.66e8\% &267 &65\\\hline
+\multirow{3}*{\textbf{cmc}} &2 &30.1 &1.178e9\% &677 &167 &30.2 &1.178e9\% &677 &167\\
+ &3 &30.3 &1.178e9\% &677 &167 &30.9 &1.178e9\% &677 &167\\
+ &4 &30.8 &1.178e9\% &677 &167 &30.6 &1.178e9\% &677 &167\\\hline
+    \end{tabular}
+\end{table}
+
+\end{document}
